@@ -57,6 +57,16 @@ body {
     pointer-events: auto;
   }
 
+  @media (max-width: 480px) {
+    gap: 6px;
+    justify-content: space-between;
+
+    // The page title is not worth the room on a phone.
+    &__title {
+      display: none;
+    }
+  }
+
   &__title {
     margin: 0 auto 0 0;
     font-size: 17px;
@@ -101,12 +111,15 @@ body {
       center / 12px no-repeat;
   }
 
-  @media (max-width: 520px) {
-    padding: 9px 10px;
-
+  @media (max-width: 640px) {
     &__extra {
       display: none;
     }
+  }
+
+  @media (max-width: 480px) {
+    gap: 5px;
+    padding: 9px 8px;
   }
 }
 
@@ -121,6 +134,11 @@ body {
   &__btn {
     appearance: none;
     padding: 7px 12px;
+
+    @media (max-width: 480px) {
+      padding: 7px 9px;
+    }
+
     border: 0;
     border-radius: $radius - 3px;
     background: transparent;
@@ -275,5 +293,23 @@ body {
 
   a {
     color: inherit;
+  }
+}
+
+// Very narrow phones: tighten the toolbar so it still fits on one row.
+@media (max-width: 360px) {
+  .toolbar {
+    left: 8px;
+    right: 8px;
+    gap: 4px;
+    font-size: 14px;
+  }
+
+  .toggle {
+    padding: 9px 6px;
+  }
+
+  .view-switch__btn {
+    padding: 7px 6px;
   }
 }

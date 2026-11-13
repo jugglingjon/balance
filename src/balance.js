@@ -6,18 +6,20 @@ const PAD_STEPS = 10; // points used to approximate each round contact patch
 // balanced, so a perfectly stacked pose is not reported as falling.
 const EDGE_TOLERANCE = 0.002;
 
-const _v = new THREE.Vector3();
 
 // Fraction of the base, measured across it through its centre, that counts as
 // comfortably balanced. Between this core and the edge is the warning zone.
 export const CORE_FRACTION = 0.5;
 
 export function createBalance() {
-  return { com: new THREE.Vector3(), hull: [], core: [], margin: 0, balanced: false, state: 'unbalanced' };
+  const parts = {};
+  for (const name of SEGMENT_NAMES) parts[name] = new THREE.Vector3();
+  return { com: new THREE.Vector3(), parts, hull: [], core: [], margin: 0, balanced: false, state: 'unbalanced' };
 }
 
 // Fills `balance` for a solved pose:
 //   com      centre of gravity of the whole body
+//   parts    centre of mass of each segment
 //   hull     base of support, a convex polygon of {x, z} floor points
 //   core     the middle of the base: the hull shrunk about its centroid
 //   margin   metres from the centre of gravity's floor projection to the
@@ -28,8 +30,8 @@ export function computeBalance(pose, frame, balance) {
   balance.com.set(0, 0, 0);
   for (const name of SEGMENT_NAMES) {
     const seg = SEGMENTS[name];
-    _v.copy(seg.com).applyQuaternion(pose[name]).add(frame.origins[name]);
-    balance.com.addScaledVector(_v, seg.mass);
+    const part = balance.parts[name].copy(seg.com).applyQuaternion(pose[name]).add(frame.origins[name]);
+    balance.com.addScaledVector(part, seg.mass);
   }
 
   const points = [];

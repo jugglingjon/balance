@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Balance</title>
+    <meta name="description" content="Drag a mannequin into yoga poses and see how its centre of gravity must stay over the hands or feet on the floor to balance." />
+    <meta name="theme-color" content="#f3f1ec" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   </head>
   <body>
     <div id="app">
@@ -14,6 +17,9 @@
         <button type="button" class="toggle" id="mirror" aria-pressed="true" title="Move left and right limbs together">
           <span class="toggle__box" aria-hidden="true"></span>Mirror<span class="toggle__extra"> left / right</span>
         </button>
+        <button type="button" class="toggle" id="mass" aria-pressed="false" title="Show where each body part's weight sits">
+          <span class="toggle__box" aria-hidden="true"></span>Mass<span class="toggle__extra"> dots</span>
+        </button>
         <div class="view-switch" role="group" aria-label="Camera view">
           <button type="button" class="view-switch__btn" data-view="side" aria-pressed="true">Side</button>
           <button type="button" class="view-switch__btn" data-view="front" aria-pressed="false">Front</button>
@@ -21,9 +27,9 @@
         </div>
       </header>
 
-      <div class="status" id="status" role="status" data-state="balanced">
+      <div class="status" id="status" data-state="balanced">
         <span class="status__dot" aria-hidden="true"></span>
-        <span class="status__label"></span>
+        <span class="status__label" role="status"></span>
         <span class="status__detail"></span>
       </div>
 

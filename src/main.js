@@ -6,14 +6,20 @@ import { createMannequin } from './mannequin.js';
 import { PRESETS, presetPose } from './presets.js';
 import { createBalance, computeBalance } from './balance.js';
 import { createBalanceViz } from './balanceViz.js';
+import { createMassViz } from './massViz.js';
 import { createHandles } from './handles.js';
 import { placePinned, makePlants, holdPlants, floorDepth, limitExcess } from './constraints.js';
 
+const TOUCH = window.matchMedia('(pointer: coarse)').matches;
+const POSING_HINT = TOUCH
+  ? 'Drag the white dots to pose · drag elsewhere to pan · pinch to zoom'
+  : 'Drag the white dots to move the body · drag elsewhere to pan · scroll to zoom';
 const HINTS = {
-  side: 'Drag the dots to move the body · drag elsewhere to pan · scroll or pinch to zoom',
-  front: 'Drag the dots to move the body · drag elsewhere to pan · scroll or pinch to zoom',
-  orbit: 'Orbit view · drag to rotate · switch to Side or Front to pose',
+  side: POSING_HINT,
+  front: POSING_HINT,
+  orbit: 'Drag to rotate · switch to Side or Front to pose',
 };
+const MASS_HINT = 'Purple dots mark each body part’s weight: the bigger the dot, the heavier the part';
 const STATUS_LABELS = { balanced: 'Balanced', edge: 'Near the edge', unbalanced: 'Off balance' };
 const POSE_TRANSITION_MS = 600;
 
@@ -22,6 +28,8 @@ const mannequin = createMannequin();
 stage.scene.add(mannequin.group);
 const balanceViz = createBalanceViz();
 stage.scene.add(balanceViz.group);
+const massViz = createMassViz();
+stage.scene.add(massViz.group);
 
 // --- Pose state -------------------------------------------------------------
 
@@ -36,6 +44,7 @@ let poseTween = null;
 let pin = null; // { segment, local, x, z, position }
 let plants = []; // hands and feet to keep planted during the current drag
 let mirrored = true;
+let showMass = false;
 
 const _pinPoint = new THREE.Vector3();
 function pinPosition() {
@@ -47,6 +56,7 @@ function refresh() {
   mannequin.update(pose, frame);
   computeBalance(pose, frame, balance);
   balanceViz.update(balance);
+  massViz.update(balance);
   handles.sync();
   updateStatus();
 }
@@ -165,7 +175,11 @@ function selectView(view) {
   viewButtons.forEach((btn) => {
     btn.setAttribute('aria-pressed', String(btn.dataset.view === view));
   });
-  hint.textContent = HINTS[view];
+  updateHint();
+}
+
+function updateHint() {
+  hint.textContent = showMass ? MASS_HINT : HINTS[stage.getView()];
 }
 
 function selectPreset(preset, animate = true) {
@@ -178,6 +192,14 @@ function selectPreset(preset, animate = true) {
 
 viewButtons.forEach((btn) => {
   btn.addEventListener('click', () => selectView(btn.dataset.view));
+});
+
+const massToggle = document.getElementById('mass');
+massToggle.addEventListener('click', () => {
+  showMass = !showMass;
+  massToggle.setAttribute('aria-pressed', String(showMass));
+  massViz.setVisible(showMass);
+  updateHint();
 });
 
 const mirrorToggle = document.getElementById('mirror');

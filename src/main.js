@@ -7,10 +7,11 @@ import { PRESETS, presetPose } from './presets.js';
 import { createBalance, computeBalance } from './balance.js';
 import { createBalanceViz } from './balanceViz.js';
 import { createHandles } from './handles.js';
+import { placePinned, makePlants, holdPlants, floorDepth, limitExcess } from './constraints.js';
 
 const HINTS = {
-  side: 'Drag the dots to move the body · scroll to zoom',
-  front: 'Drag the dots to move the body · scroll to zoom',
+  side: 'Drag the dots to move the body · drag elsewhere to pan · scroll or pinch to zoom',
+  front: 'Drag the dots to move the body · drag elsewhere to pan · scroll or pinch to zoom',
   orbit: 'Orbit view · drag to rotate · switch to Side or Front to pose',
 };
 const STATUS_LABELS = { balanced: 'Balanced', edge: 'Near the edge', unbalanced: 'Off balance' };
@@ -32,7 +33,8 @@ let poseTween = null;
 // Where the figure stands. With no pin, the middle of its base of support is
 // kept at the origin. Once the user starts dragging, one planted contact is
 // pinned in place instead so the body moves around what is on the floor.
-let pin = null; // { segment, local, x, z }
+let pin = null; // { segment, local, x, z, position }
+let plants = []; // hands and feet to keep planted during the current drag
 let mirrored = true;
 
 const _pinPoint = new THREE.Vector3();
@@ -66,15 +68,28 @@ const handles = createHandles(stage, {
   isMirrored: () => mirrored,
   pinPosition,
   poseChanged: applyPose,
-  beginDrag(fixedSegments) {
+  beginDrag(preferred, fixed, { holdLimbs }) {
     poseTween = null;
     clearPresetSelection();
     // Pin a planted contact that this drag will not move; failing that, any.
-    const contact = frame.grounded.find((c) => fixedSegments.has(c.segment)) || frame.grounded[0];
+    const contact =
+      frame.grounded.find((c) => preferred.has(c.segment)) ||
+      frame.grounded.find((c) => fixed.has(c.segment)) ||
+      frame.grounded[0];
     const def = SEGMENTS[contact.segment].contacts.find((c) => c.id === contact.id);
     pin = { segment: contact.segment, local: def.p, x: contact.position.x, z: contact.position.z };
+    pin.position = pinPosition().clone();
+    plants = holdLimbs ? makePlants(pose, frame) : [];
   },
-  endDrag() {},
+  // Costs are in degrees; a millimetre into the floor counts like a degree.
+  settle() {
+    placePinned(pose, scratchFrame.origins, pin);
+    holdPlants(pose, scratchFrame.origins, plants, pin);
+    return floorDepth(pose, scratchFrame.origins) * 1000 + limitExcess(pose);
+  },
+  endDrag() {
+    plants = [];
+  },
 });
 stage.scene.add(handles.group);
 stage.onFrame(() => handles.resize());
@@ -191,6 +206,8 @@ selectPreset(PRESETS[0], false);
 if (import.meta.env.DEV) {
   window.__balance = {
     balance,
+    pose,
+    frame,
     handlePoints() {
       const rect = stage.renderer.domElement.getBoundingClientRect();
       return handles.group.children

@@ -27,6 +27,7 @@ body {
   color: $ink;
   font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 #app {

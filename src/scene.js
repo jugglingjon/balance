@@ -39,8 +39,16 @@ export function createStage(canvas) {
   controls.minZoom = 0.5;
   controls.maxZoom = 4;
   controls.maxPolarAngle = Math.PI / 2; // never look up from under the floor
-  controls.enableRotate = false;
   controls.update();
+
+  // In the flat views a plain drag (mouse or one finger) pans; in the orbit
+  // view it rotates. Zoom is the wheel or a pinch everywhere.
+  function applyControlMode() {
+    const orbit = view === 'orbit';
+    controls.enableRotate = orbit;
+    controls.mouseButtons.LEFT = orbit ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN;
+    controls.touches.ONE = orbit ? THREE.TOUCH.ROTATE : THREE.TOUCH.PAN;
+  }
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0xcfc9bd, 2.2));
   const sun = new THREE.DirectionalLight(0xffffff, 1.4);
@@ -51,11 +59,13 @@ export function createStage(canvas) {
 
   let view = 'side';
   let transition = null;
+  applyControlMode();
 
   function setView(next) {
-    if (!VIEW_DIRECTIONS[next] || next === view) return;
+    // Choosing the current view again recentres and resets the zoom.
+    if (!VIEW_DIRECTIONS[next]) return;
     view = next;
-    controls.enableRotate = false;
+    controls.enabled = false;
     transition = {
       start: performance.now(),
       fromDir: camera.position.clone().sub(controls.target).normalize(),
@@ -76,7 +86,8 @@ export function createStage(canvas) {
     camera.lookAt(controls.target);
     if (t === 1) {
       transition = null;
-      controls.enableRotate = view === 'orbit';
+      controls.enabled = true;
+      applyControlMode();
     }
   }
 

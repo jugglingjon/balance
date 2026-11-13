@@ -22,6 +22,7 @@ to GitHub Pages.
 - `src/presets.js` – starting poses
 - `src/balance.js` – centre of gravity, base of support and the balance test
 - `src/rig.js`, `src/handles.js` – drag handles, anchored at what is on the floor
+- `src/constraints.js` – planted hands and feet (two-bone IK), the floor and joint limits
 - `src/mannequin.js` – draws the figure by driving the model's bones
 - `tools/build-rig.mjs` – offline step that prepares the model (see below)
 

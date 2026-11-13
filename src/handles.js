@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { SEGMENTS } from './skeleton.js';
-import { buildHandles, movingSet, mirrorName } from './rig.js';
+import { buildHandles, movingSet, sideOf, mirrorName } from './rig.js';
 
 const HANDLE_PIXELS = 17; // on-screen diameter, whatever the zoom
 const HIT_RADIUS = { mouse: 16, touch: 30, pen: 20 }; // pixels
 const ORDER = 20; // above the body and the balance overlay
+const ALL = Object.keys(SEGMENTS);
 
 function discTexture(fill, ring) {
   const size = 96;
@@ -26,8 +27,11 @@ function discTexture(fill, ring) {
 // ctx: {
 //   pose, frame               live objects owned by the app
 //   isMirrored()              mirror left/right toggle
-//   beginDrag(fixedSegments)  pin the figure by a contact in that set
+//   beginDrag(preferred, fixed)  pin the figure by a planted contact, taken
+//                             from the first of those segment sets that has one
 //   pinPosition()             world position of the pinned contact
+//   settle()                  enforce planted limbs on the edited pose and
+//                             return its cost (floor and joint-limit trouble)
 //   poseChanged()             re-solve and redraw after the pose was edited
 //   endDrag()
 // }
@@ -169,13 +173,36 @@ export function createHandles(stage, ctx) {
     const angle = Math.atan2(axis.dot(_c.crossVectors(_a, _b)), _a.dot(_b));
     if (Math.abs(angle) < 1e-5) return;
 
-    _q.setFromAxisAngle(axis, angle);
-    rotate(moving, _q);
-    if (twin && ctx.isMirrored()) {
-      // Same motion reflected left-to-right.
-      _q2.set(_q.x, -_q.y, -_q.z, _q.w);
-      rotate(twin, _q2);
+    // Take as much of the step as stays out of the floor and within the
+    // joint limits. A step is allowed if it does not make things worse, so a
+    // pose that is already out of range can always be dragged back.
+    for (const name of ALL) drag.saved[name].copy(ctx.pose[name]);
+    const attempt = (fraction) => {
+      for (const name of ALL) ctx.pose[name].copy(drag.saved[name]);
+      if (fraction > 0) {
+        _q.setFromAxisAngle(axis, angle * fraction);
+        rotate(moving, _q);
+        if (twin && ctx.isMirrored()) {
+          // Same motion reflected left-to-right.
+          _q2.set(_q.x, -_q.y, -_q.z, _q.w);
+          rotate(twin, _q2);
+        }
+      }
+      return ctx.settle();
+    };
+    const allowed = drag.cost + 1e-3;
+    let cost = attempt(1);
+    if (cost > allowed) {
+      let low = 0;
+      let high = 1;
+      for (let i = 0; i < 6; i++) {
+        const middle = (low + high) / 2;
+        if (attempt(middle) <= allowed) low = middle;
+        else high = middle;
+      }
+      cost = attempt(low);
     }
+    drag.cost = Math.min(cost, drag.cost);
     ctx.poseChanged();
   }
 
@@ -185,7 +212,7 @@ export function createHandles(stage, ctx) {
     if (!handle) return;
     event.preventDefault();
 
-    const all = Object.keys(SEGMENTS);
+    const all = ALL;
     const moving = handle.rock ? new Set(all) : movingSet(handle.segment, handle.pivot, anchors);
     // A free limb's opposite number mirrors the motion when it is not already
     // being carried along.
@@ -193,14 +220,29 @@ export function createHandles(stage, ctx) {
     const other = mirrorName(handle.segment);
     if (!handle.rock && other !== handle.segment && !moving.has(other)) {
       twin = movingSet(other, mirrorName(handle.pivot), anchors);
-      for (const name of twin) if (moving.has(name)) twin = null;
+      // ...unless that limb is planted, or shares parts with this one.
+      if ([...twin].some((name) => moving.has(name) || anchors.has(name))) twin = null;
     }
 
-    drag = { handle, moving, twin, pointerId: event.pointerId };
+    const saved = {};
+    for (const name of all) saved[name] = new THREE.Quaternion();
+    drag = { handle, moving, twin, saved, cost: 0, pointerId: event.pointerId };
     controls.enabled = false;
-    canvas.setPointerCapture(event.pointerId);
+    try {
+      canvas.setPointerCapture(event.pointerId);
+    } catch {
+      // Not every pointer can be captured; the drag still works over the canvas.
+    }
     canvas.style.cursor = 'grabbing';
-    ctx.beginDrag(new Set(all.filter((name) => !moving.has(name))));
+    // Prefer to pin a contact beyond the joint being turned: that part of the
+    // body is what this drag pivots on.
+    const beyondPivot = handle.rock ? new Set() : sideOf(handle.segment, handle.pivot);
+    ctx.beginDrag(
+      new Set(all.filter((name) => !beyondPivot.has(name))),
+      new Set(all.filter((name) => !moving.has(name))),
+      { holdLimbs: !handle.rock }
+    );
+    drag.cost = ctx.settle();
     restyle();
   }
 

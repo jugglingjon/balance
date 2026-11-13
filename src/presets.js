@@ -54,8 +54,8 @@ export const PRESETS = [
       shinR: [0, 75],
       footR: [0, 40],
       upperArm: [0, 165],
-      forearm: [0, 195],
-      hand: [0, 195],
+      forearm: [0, 172],
+      hand: [0, 176],
     },
   },
   {
@@ -77,7 +77,7 @@ export const PRESETS = [
       upperTorso: 114,
       head: 62,
       thigh: [-52, 14],
-      shin: 112,
+      shin: 106,
       foot: 150,
     },
   },
@@ -92,7 +92,7 @@ export const PRESETS = [
     id: 'forearm-stand',
     name: 'Forearm stand',
     view: 'side',
-    angles: { ...INVERTED, head: 95, upperArm: 17, forearm: -90, hand: -96 },
+    angles: { ...INVERTED, head: 112, upperArm: 17, forearm: -90, hand: -96 },
   },
   {
     id: 'handstand',

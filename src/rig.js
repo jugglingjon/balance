@@ -73,6 +73,11 @@ function routeToAnchor(start, blockedJoint, anchors) {
   return { dist: Infinity, joint: null };
 }
 
+// Everything on `segment`'s side of the joint `pivot`.
+export function sideOf(segment, pivot) {
+  return component(segment, new Set([pivot]));
+}
+
 // The segments that turn when `segment` is rotated about `pivot`: everything
 // on the segment's side of the pivot. If the pivot is on a limb and the
 // matching limb on the other side is planted too (standing on both feet,

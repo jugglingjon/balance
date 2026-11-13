@@ -177,17 +177,23 @@ export function createFrame() {
   return { origins, grounded: [], supportCentre: new THREE.Vector3() };
 }
 
+// Segment origins for a pose with the pelvis at the world origin.
+export function solveOrigins(pose, origins) {
+  for (const name of SEGMENT_NAMES) {
+    const seg = SEGMENTS[name];
+    if (!seg.parent) origins[name].set(0, 0, 0);
+    else origins[name].copy(seg.at).applyQuaternion(pose[seg.parent]).add(origins[seg.parent]);
+  }
+  return origins;
+}
+
 // Work out where every segment sits in the world for a pose, with the lowest
 // contact resting on the floor (y = 0). The root stays above x = z = 0;
 // `frame.supportCentre` reports where the middle of the grounded contacts is so
 // the caller can place the figure horizontally.
 export function solvePose(pose, frame) {
   const { origins } = frame;
-  for (const name of SEGMENT_NAMES) {
-    const seg = SEGMENTS[name];
-    if (!seg.parent) origins[name].set(0, 0, 0);
-    else origins[name].copy(seg.at).applyQuaternion(pose[seg.parent]).add(origins[seg.parent]);
-  }
+  solveOrigins(pose, origins);
 
   const contacts = [];
   let lowest = Infinity;

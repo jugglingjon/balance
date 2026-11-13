@@ -10,13 +10,11 @@ import { SEGMENTS, SEGMENT_NAMES } from './skeleton.js';
 // joint on its anchor side, and everything further from the floor follows
 // rigidly, exactly as if the skeleton were rooted where it touches the ground.
 
-const TIPS = [
-  { id: 'headTop', segment: 'head', p: [0, 0.27, 0] },
-  { id: 'fingertipsL', segment: 'handL', p: [0, -0.175, 0] },
-  { id: 'fingertipsR', segment: 'handR', p: [0, -0.175, 0] },
-  { id: 'toesL', segment: 'footL', p: [0, -0.04, 0.19] },
-  { id: 'toesR', segment: 'footR', p: [0, -0.04, 0.19] },
-];
+const TIPS = SEGMENT_NAMES.filter((name) => SEGMENTS[name].tip).map((name) => ({
+  id: SEGMENTS[name].tip.id,
+  segment: name,
+  p: SEGMENTS[name].tip.p,
+}));
 
 const JOINTS = SEGMENT_NAMES.filter((name) => SEGMENTS[name].parent);
 
@@ -122,7 +120,7 @@ export function buildHandles(anchors) {
     consider(joint, point, REST[joint], useChild ? joint : parent, useChild ? viaChild : viaParent);
   }
   for (const tip of TIPS) {
-    const local = new THREE.Vector3(...tip.p);
+    const local = tip.p;
     const point = { segment: tip.segment, local };
     consider(tip.id, point, local.clone().add(REST[tip.segment]), tip.segment, routeToAnchor(tip.segment, null, anchors));
   }

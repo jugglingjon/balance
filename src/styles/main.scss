@@ -259,4 +259,15 @@ body {
   color: $muted;
   font-size: 13px;
   text-align: center;
+
+  &__credit {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    pointer-events: auto;
+  }
+
+  a {
+    color: inherit;
+  }
 }

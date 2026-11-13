@@ -80,25 +80,26 @@ export const PRESETS = [
     id: 'headstand',
     name: 'Headstand',
     view: 'side',
-    angles: { ...INVERTED, upperArm: 18, forearm: -90, hand: -96 },
+    // Tripod headstand: crown of the head and both palms on the floor.
+    angles: { ...INVERTED, lowerTorso: 177, leg: 174, upperArm: 61, forearm: 0, hand: -90 },
   },
   {
     id: 'forearm-stand',
     name: 'Forearm stand',
     view: 'side',
-    angles: { ...INVERTED, head: 120, upperArm: 8, forearm: -90, hand: -96 },
+    angles: { ...INVERTED, head: 95, upperArm: 8, forearm: -90, hand: -96 },
   },
   {
     id: 'handstand',
     name: 'Handstand',
     view: 'side',
-    angles: { ...INVERTED, arm: 4, hand: -90 },
+    angles: { ...INVERTED, arm: 9, hand: -90 },
   },
   {
     id: 'straddle-handstand',
     name: 'Straddle handstand',
     view: 'front',
-    angles: { ...INVERTED, leg: [180, -55], arm: 4, hand: -90 },
+    angles: { ...INVERTED, leg: [180, -55], arm: 9, hand: -90 },
   },
 ];
 

@@ -16,3 +16,11 @@ Yoga pose balance simulator: Vite + three.js + vanilla JS modules + SCSS.
 
 - `npm run dev` – local dev server
 - `npm run build` – production build to `dist/`
+
+## Mannequin model
+
+- The figure is the GDQuest Open 3D Mannequin (CC BY 4.0). Keep the credit line in
+  `index.html` and `README.md`.
+- `node tools/build-rig.mjs` regenerates `public/models/mannequin.glb` and
+  `src/mannequinRig.json` from `assets-src/`, and prints the measurements that
+  `src/skeleton.js` is filled in from. Re-run it if the bone mapping changes.

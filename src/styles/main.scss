@@ -57,16 +57,6 @@ body {
     pointer-events: auto;
   }
 
-  @media (max-width: 480px) {
-    gap: 6px;
-    justify-content: space-between;
-
-    // The page title is not worth the room on a phone.
-    &__title {
-      display: none;
-    }
-  }
-
   &__title {
     margin: 0 auto 0 0;
     font-size: 17px;
@@ -111,16 +101,23 @@ body {
       center / 12px no-repeat;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 440px) {
+    gap: 5px;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  @media (max-width: 380px) {
     &__extra {
       display: none;
     }
   }
+}
 
-  @media (max-width: 480px) {
-    gap: 5px;
-    padding: 9px 8px;
-  }
+.toggles {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
 }
 
 .view-switch {
@@ -134,11 +131,6 @@ body {
   &__btn {
     appearance: none;
     padding: 7px 12px;
-
-    @media (max-width: 480px) {
-      padding: 7px 9px;
-    }
-
     border: 0;
     border-radius: $radius - 3px;
     background: transparent;
@@ -296,20 +288,26 @@ body {
   }
 }
 
-// Very narrow phones: tighten the toolbar so it still fits on one row.
-@media (max-width: 360px) {
+// Narrow screens: the options drop to a row of their own under the toolbar,
+// and the status pill moves down to make room (see MARGIN_TOP in scene.js).
+@media (max-width: 760px) {
   .toolbar {
-    left: 8px;
-    right: 8px;
-    gap: 4px;
-    font-size: 14px;
+    flex-wrap: wrap;
   }
 
-  .toggle {
-    padding: 9px 6px;
+  .toggles {
+    order: 3;
+    width: 100%;
+    justify-content: center;
   }
 
-  .view-switch__btn {
-    padding: 7px 6px;
+  .status {
+    top: 112px;
+  }
+}
+
+@media (max-width: 440px) {
+  .toggles {
+    gap: 5px;
   }
 }

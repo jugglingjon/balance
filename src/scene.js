@@ -10,6 +10,8 @@ const VIEW_BOTTOM = -0.12;
 const VIEW_TOP = 2.2;
 const VIEW_WIDTH = 1.5;
 const MARGIN_TOP = 112;
+const MARGIN_TOP_NARROW = 156; // the options wrap onto a second row
+const NARROW = 760;
 const MARGIN_BOTTOM = 112;
 const TARGET = new THREE.Vector3(0, 1.1, 0);
 const CAMERA_DISTANCE = 10;
@@ -99,7 +101,8 @@ export function createStage(canvas) {
     // Fit the band of world space the figure can occupy into the part of the
     // canvas that is not covered by the toolbar and the preset dock. The
     // frustum is off-centre vertically so the floor sits just above the dock.
-    const usable = Math.max(height - MARGIN_TOP - MARGIN_BOTTOM, 100);
+    const marginTop = width <= NARROW ? MARGIN_TOP_NARROW : MARGIN_TOP;
+    const usable = Math.max(height - marginTop - MARGIN_BOTTOM, 100);
     const scale = Math.max((VIEW_TOP - VIEW_BOTTOM) / usable, VIEW_WIDTH / width); // metres per pixel
     camera.bottom = VIEW_BOTTOM - MARGIN_BOTTOM * scale - TARGET.y;
     camera.top = camera.bottom + height * scale;

@@ -14,12 +14,17 @@
 
       <header class="toolbar">
         <h1 class="toolbar__title">Balance</h1>
-        <button type="button" class="toggle" id="mirror" aria-pressed="true" title="Move left and right limbs together">
-          <span class="toggle__box" aria-hidden="true"></span>Mirror<span class="toggle__extra"> left / right</span>
-        </button>
-        <button type="button" class="toggle" id="mass" aria-pressed="false" title="Show where each body part's weight sits">
-          <span class="toggle__box" aria-hidden="true"></span>Mass<span class="toggle__extra"> dots</span>
-        </button>
+        <div class="toggles" role="group" aria-label="Options">
+          <button type="button" class="toggle" id="mirror" aria-pressed="true" title="Move both arms together">
+            <span class="toggle__box" aria-hidden="true"></span>Mirror<span class="toggle__extra"> arms</span>
+          </button>
+          <button type="button" class="toggle" id="split" aria-pressed="false" title="Move each leg on its own">
+            <span class="toggle__box" aria-hidden="true"></span>Split<span class="toggle__extra"> legs</span>
+          </button>
+          <button type="button" class="toggle" id="mass" aria-pressed="false" title="Show where each body part's weight sits">
+            <span class="toggle__box" aria-hidden="true"></span>Mass<span class="toggle__extra"> dots</span>
+          </button>
+        </div>
         <div class="view-switch" role="group" aria-label="Camera view">
           <button type="button" class="view-switch__btn" data-view="side" aria-pressed="true">Side</button>
           <button type="button" class="view-switch__btn" data-view="front" aria-pressed="false">Front</button>

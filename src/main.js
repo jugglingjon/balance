@@ -44,8 +44,48 @@ let poseTween = null;
 // pinned in place instead so the body moves around what is on the floor.
 let pin = null; // { segment, local, x, z, position }
 let plants = []; // hands and feet to keep planted during the current drag
-let mirrored = true;
+let mirrored = true; // arms move together
+let splitLegs = false; // legs move independently
 let showMass = false;
+
+const LEG_PARTS = ['thigh', 'shin', 'foot'];
+const SPLIT_ANGLE = THREE.MathUtils.degToRad(14);
+const SIDE_AXIS = new THREE.Vector3(1, 0, 0);
+const _tilt = new THREE.Quaternion();
+
+function copyPose(from, to = createPose()) {
+  for (const name of SEGMENT_NAMES) to[name].copy(from[name]);
+  return to;
+}
+
+// With the legs split, two legs in the same position would hide each other's
+// handles in the side view. Swing the far (right) leg a little, whichever way
+// lifts it further from the floor.
+function separateLegs(target) {
+  const together = LEG_PARTS.every((part) => target[part + 'L'].angleTo(mirrorQuat(target[part + 'R'])) < 0.1);
+  if (!together) return target;
+  let best = null;
+  for (const sign of [1, -1]) {
+    const candidate = copyPose(target);
+    _tilt.setFromAxisAngle(SIDE_AXIS, sign * SPLIT_ANGLE);
+    for (const part of LEG_PARTS) candidate[part + 'R'].premultiply(_tilt);
+    solvePose(candidate, scratchFrame);
+    const footHeight = scratchFrame.origins.footR.y - limitExcess(candidate);
+    if (!best || footHeight > best.footHeight) best = { candidate, footHeight };
+  }
+  return best.candidate;
+}
+
+// Bring the legs back together: the far leg takes up the near leg's position.
+function joinLegs(target) {
+  for (const part of LEG_PARTS) target[part + 'R'].copy(mirrorQuat(target[part + 'L']));
+  return target;
+}
+
+const _mirror = new THREE.Quaternion();
+function mirrorQuat(q) {
+  return _mirror.set(q.x, -q.y, -q.z, q.w);
+}
 
 const _pinPoint = new THREE.Vector3();
 function pinPosition() {
@@ -76,7 +116,8 @@ function applyPose() {
 const handles = createHandles(stage, {
   pose,
   frame,
-  isMirrored: () => mirrored,
+  // Arms follow the Mirror toggle; legs move together unless split.
+  isMirrored: (segment) => (LEG_PARTS.some((part) => segment.startsWith(part)) ? !splitLegs : mirrored),
   pinPosition,
   poseChanged: applyPose,
   beginDrag(preferred, fixed, { holdLimbs }) {
@@ -107,6 +148,11 @@ stage.onFrame(() => handles.resize());
 
 function setPreset(preset, animate = true) {
   const to = presetPose(preset);
+  tweenTo(splitLegs ? separateLegs(to) : to, animate);
+}
+
+// Move to a pose, recentring the figure over its base of support.
+function tweenTo(to, animate = true) {
   pin = null;
   if (!animate) {
     for (const name of SEGMENT_NAMES) pose[name].copy(to[name]);
@@ -114,8 +160,7 @@ function setPreset(preset, animate = true) {
     applyPose();
     return;
   }
-  const from = createPose();
-  for (const name of SEGMENT_NAMES) from[name].copy(pose[name]);
+  const from = copyPose(pose);
   // Blend the pelvis position too: from wherever the figure is now to where
   // the new pose stands when centred. solvePose leaves the pelvis above the
   // origin, so the centred pelvis offset is minus the support centre.
@@ -201,6 +246,15 @@ massToggle.addEventListener('click', () => {
   massToggle.setAttribute('aria-pressed', String(showMass));
   massViz.setVisible(showMass);
   updateHint();
+});
+
+const splitToggle = document.getElementById('split');
+splitToggle.addEventListener('click', () => {
+  splitLegs = !splitLegs;
+  splitToggle.setAttribute('aria-pressed', String(splitLegs));
+  const target = copyPose(pose);
+  tweenTo(splitLegs ? separateLegs(target) : joinLegs(target));
+  clearPresetSelection();
 });
 
 const mirrorToggle = document.getElementById('mirror');

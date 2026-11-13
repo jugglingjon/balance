@@ -26,7 +26,7 @@ function discTexture(fill, ring) {
 
 // ctx: {
 //   pose, frame               live objects owned by the app
-//   isMirrored()              mirror left/right toggle
+//   isMirrored(segment)       should this limb's opposite number move with it?
 //   beginDrag(preferred, fixed)  pin the figure by a planted contact, taken
 //                             from the first of those segment sets that has one
 //   pinPosition()             world position of the pinned contact
@@ -182,7 +182,7 @@ export function createHandles(stage, ctx) {
       if (fraction > 0) {
         _q.setFromAxisAngle(axis, angle * fraction);
         rotate(moving, _q);
-        if (twin && ctx.isMirrored()) {
+        if (twin && ctx.isMirrored(handle.segment)) {
           // Same motion reflected left-to-right.
           _q2.set(_q.x, -_q.y, -_q.z, _q.w);
           rotate(twin, _q2);

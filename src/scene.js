@@ -9,7 +9,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const VIEW_BOTTOM = -0.12;
 const VIEW_TOP = 2.2;
 const VIEW_WIDTH = 2.3;
-const MARGIN_TOP = 70;
+const MARGIN_TOP = 112;
 const MARGIN_BOTTOM = 96;
 const TARGET = new THREE.Vector3(0, 1.1, 0);
 const CAMERA_DISTANCE = 10;

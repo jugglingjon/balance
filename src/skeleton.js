@@ -7,7 +7,9 @@ import * as THREE from 'three';
 //
 // Lengths are metres for a figure about 1.69 m tall. Mass values are fractions
 // of total body mass (they sum to 1) and `com` is the segment's centre of mass
-// in its local frame. `contacts` are spheres that can rest on the floor.
+// in its local frame. `contacts` are spheres that can rest on the floor: `r` is
+// the height of the sphere's centre when it touches down and `pad` (default r)
+// is the radius of the patch it presses onto the floor.
 
 const LIMBS = {
   upperArm: {
@@ -32,9 +34,9 @@ const LIMBS = {
     com: [0, -0.09, 0],
     shapes: [{ a: [0, -0.03, 0], b: [0, -0.15, 0], r: 0.036, scale: [1, 1, 0.4] }],
     contacts: [
-      { id: 'heelOfHand', p: [0, -0.015, 0], r: 0.015 },
-      { id: 'knuckles', p: [0, -0.1, 0], r: 0.015 },
-      { id: 'fingertips', p: [0, -0.175, 0], r: 0.015 },
+      { id: 'heelOfHand', p: [0, -0.03, 0], r: 0.015, pad: 0.03 },
+      { id: 'knuckles', p: [0, -0.1, 0], r: 0.015, pad: 0.03 },
+      { id: 'fingertips', p: [0, -0.16, 0], r: 0.015, pad: 0.03 },
     ],
   },
   thigh: {
@@ -48,7 +50,7 @@ const LIMBS = {
     mass: 0.0465,
     com: [0, -0.182, 0],
     shapes: [{ a: [0, 0, 0], b: [0, -0.42, 0], r: 0.045 }],
-    contacts: [{ id: 'knee', p: [0, 0, 0], r: 0.055 }],
+    contacts: [{ id: 'knee', p: [0, 0, 0], r: 0.055, pad: 0.035 }],
     child: { name: 'foot', at: [0, -0.42, 0] },
   },
   foot: {
@@ -69,8 +71,8 @@ const TRUNK = {
     com: [0, 0.1, 0],
     shapes: [{ a: [0, 0.02, 0], b: [0, 0.2, 0], r: 0.095, scale: [1.45, 1, 1] }],
     contacts: [
-      { id: 'sitBoneL', p: [0.07, 0, -0.02], r: 0.085 },
-      { id: 'sitBoneR', p: [-0.07, 0, -0.02], r: 0.085 },
+      { id: 'sitBoneL', p: [0.07, 0, -0.02], r: 0.085, pad: 0.05 },
+      { id: 'sitBoneR', p: [-0.07, 0, -0.02], r: 0.085, pad: 0.05 },
     ],
   },
   upperTorso: {
@@ -92,7 +94,7 @@ const TRUNK = {
       { a: [0, 0, 0], b: [0, 0.08, 0], r: 0.04 },
       { a: [0, 0.17, 0], b: [0, 0.17, 0], r: 0.1 },
     ],
-    contacts: [{ id: 'head', p: [0, 0.17, 0], r: 0.1 }],
+    contacts: [{ id: 'head', p: [0, 0.17, 0], r: 0.1, pad: 0.04 }],
   },
 };
 
@@ -111,6 +113,7 @@ function buildSegments() {
         id: side ? c.id + side : c.id,
         p: new THREE.Vector3(...c.p),
         r: c.r,
+        pad: c.pad ?? c.r,
       })),
     };
   };
@@ -166,7 +169,7 @@ export function solvePose(pose, frame) {
   for (const name of SEGMENT_NAMES) {
     for (const c of SEGMENTS[name].contacts) {
       const p = c.p.clone().applyQuaternion(pose[name]).add(origins[name]);
-      contacts.push({ id: c.id, segment: name, position: p, bottom: p.y - c.r });
+      contacts.push({ id: c.id, segment: name, position: p, pad: c.pad, bottom: p.y - c.r });
       lowest = Math.min(lowest, p.y - c.r);
     }
   }

@@ -4,6 +4,8 @@ $muted: #7b7872;
 $panel: rgba(255, 255, 255, 0.82);
 $line: rgba(43, 42, 40, 0.14);
 $accent: #2f6f5e;
+$balanced: #2f9e6e;
+$unbalanced: #d1495b;
 $radius: 10px;
 $gutter: 16px;
 
@@ -95,6 +97,56 @@ body {
     &[aria-pressed="true"] {
       background: $accent;
       color: #fff;
+    }
+  }
+}
+
+.status {
+  --state: #{$balanced};
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - #{$gutter * 2});
+  padding: 7px 14px 7px 11px;
+  background: $panel;
+  border: 1px solid $line;
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+  pointer-events: none;
+
+  &[data-state="unbalanced"] {
+    --state: #{$unbalanced};
+  }
+
+  &__dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--state);
+  }
+
+  &__label {
+    font-weight: 600;
+    color: var(--state);
+  }
+
+  &__detail {
+    overflow: hidden;
+    color: $muted;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 520px) {
+    &__prefix {
+      display: none;
     }
   }
 }

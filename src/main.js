@@ -3,6 +3,8 @@ import { createStage } from './scene.js';
 import { SEGMENT_NAMES, createPose, createFrame, solvePose, shiftFrame } from './skeleton.js';
 import { createMannequin } from './mannequin.js';
 import { PRESETS, presetPose } from './presets.js';
+import { createBalance, computeBalance } from './balance.js';
+import { createBalanceViz } from './balanceViz.js';
 
 const HINTS = {
   side: 'Side view · scroll to zoom, right-drag to pan',
@@ -14,20 +16,31 @@ const POSE_TRANSITION_MS = 600;
 const stage = createStage(document.getElementById('stage'));
 const mannequin = createMannequin();
 stage.scene.add(mannequin.group);
+const balanceViz = createBalanceViz();
+stage.scene.add(balanceViz.group);
 
 // --- Pose state -------------------------------------------------------------
 
 const pose = createPose();
 const frame = createFrame();
 const scratchFrame = createFrame();
+const balance = createBalance();
 let poseTween = null;
+
+// Redraw everything that depends on the solved pose.
+function refresh() {
+  mannequin.update(pose, frame);
+  computeBalance(pose, frame, balance);
+  balanceViz.update(balance);
+  updateStatus();
+}
 
 // Solve the pose and slide the figure so the middle of its base of support
 // sits at (cx, cz) on the floor.
 function applyPose(cx = 0, cz = 0) {
   solvePose(pose, frame);
   shiftFrame(frame, cx - frame.supportCentre.x, cz - frame.supportCentre.z);
-  mannequin.update(pose, frame);
+  refresh();
 }
 
 function supportCentreOf(p) {
@@ -59,7 +72,7 @@ stage.onFrame((now) => {
   const b = supportCentreOf(poseTween.to);
   solvePose(pose, frame);
   shiftFrame(frame, -(a.x + (b.x - a.x) * e), -(a.z + (b.z - a.z) * e));
-  mannequin.update(pose, frame);
+  refresh();
   if (t === 1) {
     poseTween = null;
     applyPose();
@@ -71,6 +84,19 @@ stage.onFrame((now) => {
 const viewButtons = document.querySelectorAll('.view-switch__btn');
 const presetBar = document.getElementById('presets');
 const hint = document.getElementById('hint');
+const statusEl = document.getElementById('status');
+const statusLabel = statusEl.querySelector('.status__label');
+const statusDetail = statusEl.querySelector('.status__detail');
+
+function updateStatus() {
+  const cm = Math.abs(balance.margin * 100);
+  const distance = cm < 9.95 ? cm.toFixed(1) : cm.toFixed(0);
+  statusEl.dataset.state = balance.balanced ? 'balanced' : 'unbalanced';
+  statusLabel.textContent = balance.balanced ? 'Balanced' : 'Off balance';
+  statusDetail.innerHTML =
+    `<span class="status__prefix">Centre of gravity is </span>${distance} cm ` +
+    (balance.balanced ? 'inside the base' : 'outside the base');
+}
 
 function selectView(view) {
   stage.setView(view);

@@ -20,7 +20,13 @@ const LIMB_PARTS = {
 const INVERTED = { lowerTorso: 180, upperTorso: 180, head: 180, leg: 180 };
 
 export const PRESETS = [
-  { id: 'mountain', name: 'Mountain', view: 'side', angles: {} },
+  {
+    id: 'mountain',
+    name: 'Mountain',
+    view: 'side',
+    // A slight forward lean from the ankles puts the weight over mid-foot.
+    angles: { lowerTorso: 2.5, upperTorso: 2.5, head: 2.5, arm: 2.5, leg: 2.5, foot: 0 },
+  },
   {
     id: 'forward-fold',
     name: 'Forward fold',
@@ -31,13 +37,15 @@ export const PRESETS = [
     id: 'warrior-3',
     name: 'Warrior III',
     view: 'side',
-    angles: { lowerTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: -4, footL: 0 },
+    angles: { lowerTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: [-4, -6], footL: 0 },
   },
   {
     id: 'tree',
     name: 'Tree',
     view: 'front',
     angles: {
+      legL: [0, -7.5], // shift the hips over the standing foot
+      footL: 0,
       thighR: [0, -55],
       shinR: [0, 75],
       footR: [0, 40],
@@ -78,19 +86,19 @@ export const PRESETS = [
     id: 'forearm-stand',
     name: 'Forearm stand',
     view: 'side',
-    angles: { ...INVERTED, head: 120, upperArm: 0, forearm: -90, hand: -96 },
+    angles: { ...INVERTED, head: 120, upperArm: 8, forearm: -90, hand: -96 },
   },
   {
     id: 'handstand',
     name: 'Handstand',
     view: 'side',
-    angles: { ...INVERTED, arm: 0, hand: -90 },
+    angles: { ...INVERTED, arm: 4, hand: -90 },
   },
   {
     id: 'straddle-handstand',
     name: 'Straddle handstand',
     view: 'front',
-    angles: { ...INVERTED, leg: [180, -55], arm: 0, hand: -90 },
+    angles: { ...INVERTED, leg: [180, -55], arm: 4, hand: -90 },
   },
 ];
 

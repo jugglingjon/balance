@@ -119,8 +119,9 @@ const HANG = [0, -1, 0];
 const AHEAD = [0, 0, 1];
 
 const CENTRAL_LIMITS = [
-  { child: 'midTorso', parent: 'lowerTorso', kind: 'swing', axis: UP, max: 45 },
-  { child: 'upperTorso', parent: 'midTorso', kind: 'swing', axis: UP, max: 40 },
+  // The spine folds forward much further than it arches back or bends sideways.
+  { child: 'midTorso', parent: 'lowerTorso', kind: 'cone', axis: UP, forward: 80, side: 45, back: 45 },
+  { child: 'upperTorso', parent: 'midTorso', kind: 'cone', axis: UP, forward: 70, side: 40, back: 40 },
   { child: 'head', parent: 'upperTorso', kind: 'swing', axis: UP, max: 70 },
 ];
 const SIDE_LIMITS = [
@@ -130,9 +131,9 @@ const SIDE_LIMITS = [
   // hanging part backward (knee flexion), negative forward (elbow flexion).
   { child: 'shin', parent: 'thigh', kind: 'hinge', axis: HANG, min: -5, max: 160, sideways: 8 },
   { child: 'foot', parent: 'shin', kind: 'hinge', axis: AHEAD, min: -35, max: 60, sideways: 25 },
-  { child: 'upperArm', parent: 'upperTorso', kind: 'shoulder', back: 60, overhead: 155 },
+  { child: 'upperArm', parent: 'upperTorso', kind: 'shoulder', back: 60, overhead: 110 },
   { child: 'forearm', parent: 'upperArm', kind: 'hinge', axis: HANG, min: -155, max: 5, sideways: 8 },
-  { child: 'hand', parent: 'forearm', kind: 'swing', axis: HANG, max: 105 },
+  // Wrists are left free.
 ];
 const LIMITS = CENTRAL_LIMITS.map((l) => ({ ...l, axis: new THREE.Vector3(...l.axis) }));
 for (const side of ['L', 'R']) {
@@ -174,8 +175,9 @@ function excess(limit, pose) {
     return Math.max(0, angle - max);
   }
 
-  // Shoulder: free to the front and side. Behind the body the arm stops early,
-  // except close to overhead, which is reached by way of the front.
+  // Shoulder: free to the front and side. Behind the body the arm stops early
+  // (`back`), except in the range above `overhead`, which is reached by way of
+  // the front: arms raised and carried on past vertical.
   if (ahead >= 0) return 0;
   const max = 180 + (limit.back - 180) * -ahead;
   return Math.max(0, Math.min(angle - max, limit.overhead - angle));

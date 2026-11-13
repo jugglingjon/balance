@@ -22,6 +22,7 @@ const HINTS = {
 const MASS_HINT = 'Purple dots mark each body part’s weight: the bigger the dot, the heavier the part';
 const STATUS_LABELS = { balanced: 'Balanced', edge: 'Near the edge', unbalanced: 'Off balance' };
 const POSE_TRANSITION_MS = 600;
+const DEFAULT_PRESET = 'handstand';
 
 const stage = createStage(document.getElementById('stage'));
 const mannequin = createMannequin();
@@ -222,7 +223,7 @@ for (const preset of PRESETS) {
 }
 
 selectView('side');
-selectPreset(PRESETS[0], false);
+selectPreset(PRESETS.find((preset) => preset.id === DEFAULT_PRESET), false);
 
 // Development aid: lets automated checks find handles on screen.
 if (import.meta.env.DEV) {

@@ -57,6 +57,10 @@ const PROPORTIONS = [
   [/^hand\./, { all: 1.05 }],
 ];
 
+// Feet are shortened heel-to-toe (not in height or width) by moving the
+// mesh's vertices, since a bone scale can only act along the bone's own axes.
+const FOOT_LENGTH = 0.95;
+
 const BONE_SEGMENT = Object.fromEntries(Object.entries(SEGMENT_BONES).map(([s, b]) => [b, s]));
 const DOWN = new THREE.Vector3(0, -1, 0);
 const ONE = new THREE.Vector3(1, 1, 1);
@@ -67,6 +71,27 @@ const names = Object.keys(bones); // skin joint order, parents first
 const pos = (m) => new THREE.Vector3().setFromMatrixPosition(m);
 const rot = (m) => new THREE.Quaternion().setFromRotationMatrix(m);
 const childOf = (name, pattern) => names.find((n) => bones[n].parent === name && pattern.test(n));
+
+// --- Shorter feet ------------------------------------------------------------
+// Squash a bind-pose vertex toward the ankle along the direction its foot
+// points, in proportion to how much the foot bones control it.
+const FEET = ['.l', '.r'].map((suffix) => ({
+  suffix,
+  ankle: pos(bones['foot' + suffix].world),
+  ahead: new THREE.Vector3(0, 1, 0).transformDirection(bones['foot' + suffix].world).setY(0).normalize(),
+}));
+function shortenFoot(vertex, jointNames, weights) {
+  for (const foot of FEET) {
+    let influence = 0;
+    jointNames.forEach((name, k) => {
+      if (name === 'foot' + foot.suffix || name === 'ball' + foot.suffix) influence += weights[k];
+    });
+    if (!influence) continue;
+    const along = vertex.clone().sub(foot.ankle).dot(foot.ahead);
+    vertex.addScaledVector(foot.ahead, along * (FOOT_LENGTH - 1) * influence);
+  }
+  return vertex;
+}
 
 // --- Scales (in each bone's own axes; bones point along +Y) -------------------
 const scale = {};
@@ -161,9 +186,10 @@ for (const prim of glb.json.meshes[0].primitives) {
   const W = glb.accessor(prim.attributes.WEIGHTS_0);
   for (let i = 0; i < P.length; i++) {
     const v = new THREE.Vector3();
+    const bound = shortenFoot(new THREE.Vector3(...P[i]), J[i].map((j) => names[j]), W[i]);
     let main = 0;
     for (let k = 0; k < 4; k++) {
-      v.addScaledVector(new THREE.Vector3(...P[i]).applyMatrix4(skinMatrix[J[i][k]]), W[i][k]);
+      v.addScaledVector(bound.clone().applyMatrix4(skinMatrix[J[i][k]]), W[i][k]);
       if (W[i][k] > W[i][main]) main = k;
     }
     (clouds[segmentOf[names[J[i][main]]]] ||= []).push(v);
@@ -205,9 +231,21 @@ fs.writeFileSync(RIG_OUT, JSON.stringify(rig, null, 1) + '\n');
 const io = new NodeIO().registerExtensions([KHRMeshQuantization]);
 const doc = await io.read(SOURCE);
 for (const animation of doc.getRoot().listAnimations()) animation.dispose();
+const jointNames = doc.getRoot().listSkins()[0].listJoints().map((joint) => joint.getName());
 // The model has no textures, so its UV sets (and second colour set) are dead weight.
 for (const mesh of doc.getRoot().listMeshes()) {
   for (const prim of mesh.listPrimitives()) {
+    const position = prim.getAttribute('POSITION');
+    const joints = prim.getAttribute('JOINTS_0');
+    const weights = prim.getAttribute('WEIGHTS_0');
+    for (let i = 0; i < position.getCount(); i++) {
+      const v = shortenFoot(
+        new THREE.Vector3(...position.getElement(i, [])),
+        joints.getElement(i, []).map((j) => jointNames[j]),
+        weights.getElement(i, [])
+      );
+      position.setElement(i, v.toArray());
+    }
     for (const semantic of ['TEXCOORD_0', 'TEXCOORD_1', 'COLOR_1']) prim.setAttribute(semantic, null);
   }
 }

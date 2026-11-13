@@ -36,4 +36,4 @@ licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 Changes made here: the animation clips and unused vertex attributes were removed
 and the mesh was quantized (`tools/build-rig.mjs`). At run time some bones are
 scaled to give the figure adult proportions (smaller head, longer arms, slimmer
-chest). The original file is kept in `assets-src/`.
+chest), and the feet were shortened by 5%. The original file is kept in `assets-src/`.

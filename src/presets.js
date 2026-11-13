@@ -21,23 +21,53 @@ const INVERTED = { lowerTorso: 180, midTorso: 180, upperTorso: 180, head: 180, l
 
 export const PRESETS = [
   {
-    id: 'mountain',
-    name: 'Mountain',
+    id: 'handstand',
+    name: 'Handstand',
     view: 'side',
-    // A slight forward lean from the ankles puts the weight over mid-foot.
-    angles: { lowerTorso: 2.5, midTorso: 2.5, upperTorso: 2.5, head: 2.5, arm: 2.5, leg: 2.5, foot: 0 },
+    angles: { ...INVERTED, arm: 9, hand: -90 },
   },
   {
-    id: 'forward-fold',
-    name: 'Forward fold',
+    id: 'forearm-stand',
+    name: 'Forearm stand',
     view: 'side',
-    angles: { leg: -7, foot: 0, lowerTorso: 100, midTorso: 135, upperTorso: 160, head: 165, upperArm: 6, forearm: -65, hand: -65 },
+    angles: { ...INVERTED, head: 112, upperArm: 17, forearm: -90, hand: -96 },
   },
   {
-    id: 'warrior-3',
-    name: 'Warrior III',
+    id: 'headstand',
+    name: 'Headstand',
     view: 'side',
-    angles: { lowerTorso: 90, midTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: [-7, -8], footL: 0 },
+    // Supported headstand: crown of the head and both forearms on the floor.
+    angles: { ...INVERTED, upperArm: 21.6, forearm: -90, hand: -96 },
+  },
+  {
+    id: 'tripod-headstand',
+    name: 'Tripod headstand',
+    view: 'side',
+    // Crown of the head and both palms on the floor, forearms upright.
+    angles: { ...INVERTED, lowerTorso: 172, midTorso: 176, leg: 166, upperArm: 81.8, forearm: 0, hand: -90 },
+  },
+  {
+    id: 'straddle-handstand',
+    name: 'Straddle handstand',
+    view: 'front',
+    angles: { ...INVERTED, leg: [180, -55], arm: 9, hand: -90 },
+  },
+  {
+    id: 'crow',
+    name: 'Crow',
+    view: 'side',
+    angles: {
+      hand: -90,
+      forearm: 14,
+      upperArm: 58,
+      lowerTorso: 80,
+      midTorso: 98,
+      upperTorso: 114,
+      head: 62,
+      thigh: [-52, 14],
+      shin: 106,
+      foot: 150,
+    },
   },
   {
     id: 'tree',
@@ -59,52 +89,29 @@ export const PRESETS = [
     },
   },
   {
+    id: 'mountain',
+    name: 'Mountain',
+    view: 'side',
+    // A slight forward lean from the ankles puts the weight over mid-foot.
+    angles: { lowerTorso: 2.5, midTorso: 2.5, upperTorso: 2.5, head: 2.5, arm: 2.5, leg: 2.5, foot: 0 },
+  },
+  {
+    id: 'forward-fold',
+    name: 'Forward fold',
+    view: 'side',
+    angles: { leg: -7, foot: 0, lowerTorso: 100, midTorso: 135, upperTorso: 160, head: 165, upperArm: 6, forearm: -65, hand: -65 },
+  },
+  {
+    id: 'warrior-3',
+    name: 'Warrior III',
+    view: 'side',
+    angles: { lowerTorso: 90, midTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: [-7, -8], footL: 0 },
+  },
+  {
     id: 'boat',
     name: 'Boat',
     view: 'side',
     angles: { lowerTorso: -42, midTorso: -36, upperTorso: -30, head: -15, leg: -128, arm: -95 },
-  },
-  {
-    id: 'crow',
-    name: 'Crow',
-    view: 'side',
-    angles: {
-      hand: -90,
-      forearm: 14,
-      upperArm: 58,
-      lowerTorso: 80,
-      midTorso: 98,
-      upperTorso: 114,
-      head: 62,
-      thigh: [-52, 14],
-      shin: 106,
-      foot: 150,
-    },
-  },
-  {
-    id: 'headstand',
-    name: 'Headstand',
-    view: 'side',
-    // Supported headstand: crown of the head and both forearms on the floor.
-    angles: { ...INVERTED, upperArm: 21.6, forearm: -90, hand: -96 },
-  },
-  {
-    id: 'forearm-stand',
-    name: 'Forearm stand',
-    view: 'side',
-    angles: { ...INVERTED, head: 112, upperArm: 17, forearm: -90, hand: -96 },
-  },
-  {
-    id: 'handstand',
-    name: 'Handstand',
-    view: 'side',
-    angles: { ...INVERTED, arm: 9, hand: -90 },
-  },
-  {
-    id: 'straddle-handstand',
-    name: 'Straddle handstand',
-    view: 'front',
-    angles: { ...INVERTED, leg: [180, -55], arm: 9, hand: -90 },
   },
 ];
 

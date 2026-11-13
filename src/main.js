@@ -70,7 +70,7 @@ function separateLegs(target) {
     _tilt.setFromAxisAngle(SIDE_AXIS, sign * SPLIT_ANGLE);
     for (const part of LEG_PARTS) candidate[part + 'R'].premultiply(_tilt);
     solvePose(candidate, scratchFrame);
-    const footHeight = scratchFrame.origins.footR.y - limitExcess(candidate);
+    const footHeight = scratchFrame.origins.footR.y - limitExcess(candidate, { splitLegs: true });
     if (!best || footHeight > best.footHeight) best = { candidate, footHeight };
   }
   return best.candidate;
@@ -137,7 +137,7 @@ const handles = createHandles(stage, {
   settle() {
     placePinned(pose, scratchFrame.origins, pin);
     holdPlants(pose, scratchFrame.origins, plants, pin);
-    return floorDepth(pose, scratchFrame.origins) * 1000 + limitExcess(pose);
+    return floorDepth(pose, scratchFrame.origins) * 1000 + limitExcess(pose, { splitLegs });
   },
   endDrag() {
     plants = [];

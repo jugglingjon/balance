@@ -1,4 +1,4 @@
-# Balance
+# Balance Simulator
 
 A yoga pose balance simulator. Drag the joints of a simple mannequin and watch
 its centre of gravity move: a pose is balanceable only while the centre of

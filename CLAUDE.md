@@ -1,4 +1,4 @@
-# Balance
+# Balance Simulator
 
 Yoga pose balance simulator: Vite + three.js + vanilla JS modules + SCSS.
 

@@ -58,6 +58,13 @@ body {
   }
 
   &__title {
+    white-space: nowrap;
+
+    // Too long to share a row with the view buttons on the narrowest phones.
+    @media (max-width: 380px) {
+      display: none;
+    }
+
     margin: 0 auto 0 0;
     font-size: 17px;
     font-weight: 600;
@@ -293,6 +300,10 @@ body {
 @media (max-width: 760px) {
   .toolbar {
     flex-wrap: wrap;
+  }
+
+  .toolbar {
+    justify-content: flex-end;
   }
 
   .toggles {

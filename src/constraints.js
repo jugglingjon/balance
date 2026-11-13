@@ -126,7 +126,9 @@ const CENTRAL_LIMITS = [
 ];
 const SIDE_LIMITS = [
   // Angle of the thigh from straight down, by direction.
-  { child: 'thigh', parent: 'lowerTorso', kind: 'cone', forward: 135, side: 95, back: 35 },
+  // `backSplit` replaces `back` while the legs are split, when one leg reaching
+  // far behind (splits, scorpion) is the whole point.
+  { child: 'thigh', parent: 'lowerTorso', kind: 'cone', forward: 135, side: 95, back: 60, backSplit: 110 },
   // Hinges: signed bend about the parent's left-right axis. Positive carries a
   // hanging part backward (knee flexion), negative forward (elbow flexion).
   { child: 'shin', parent: 'thigh', kind: 'hinge', axis: HANG, min: -5, max: 160, sideways: 8 },
@@ -148,7 +150,7 @@ for (const side of ['L', 'R']) {
 }
 
 // Degrees by which one joint is past its limit (0 when within range).
-function excess(limit, pose) {
+function excess(limit, pose, splitLegs) {
   // d: the child's long axis expressed in the parent's frame.
   const rest = limit.axis || DOWN;
   const d = _a.copy(rest).applyQuaternion(pose[limit.child]).applyQuaternion(_q.copy(pose[limit.parent]).invert());
@@ -171,7 +173,8 @@ function excess(limit, pose) {
   const ahead = sideways > 1e-4 ? d.z / sideways : 1;
 
   if (limit.kind === 'cone') {
-    const max = ahead >= 0 ? limit.side + (limit.forward - limit.side) * ahead : limit.side + (limit.side - limit.back) * ahead;
+    const back = splitLegs && limit.backSplit ? limit.backSplit : limit.back;
+    const max = ahead >= 0 ? limit.side + (limit.forward - limit.side) * ahead : limit.side + (limit.side - back) * ahead;
     return Math.max(0, angle - max);
   }
 
@@ -184,8 +187,8 @@ function excess(limit, pose) {
 }
 
 // Total degrees by which the pose is outside its joint limits.
-export function limitExcess(pose) {
+export function limitExcess(pose, { splitLegs = false } = {}) {
   let total = 0;
-  for (const limit of LIMITS) total += excess(limit, pose);
+  for (const limit of LIMITS) total += excess(limit, pose, splitLegs);
   return total;
 }

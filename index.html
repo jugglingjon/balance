@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Balance</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="stage" aria-label="3D balance simulator view"></canvas>
+
+      <header class="toolbar">
+        <h1 class="toolbar__title">Balance</h1>
+        <div class="view-switch" role="group" aria-label="Camera view">
+          <button type="button" class="view-switch__btn" data-view="side" aria-pressed="true">Side</button>
+          <button type="button" class="view-switch__btn" data-view="front" aria-pressed="false">Front</button>
+          <button type="button" class="view-switch__btn" data-view="orbit" aria-pressed="false">Orbit</button>
+        </div>
+      </header>
+
+      <p class="hint" id="hint"></p>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

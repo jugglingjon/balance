@@ -18,7 +18,7 @@ to GitHub Pages.
 
 ## How it works
 
-- `src/skeleton.js` – the body as 15 rigid segments with masses and floor contacts
+- `src/skeleton.js` – the body as 16 rigid segments with masses and floor contacts
 - `src/presets.js` – starting poses
 - `src/balance.js` – centre of gravity, base of support and the balance test
 - `src/rig.js`, `src/handles.js` – drag handles, anchored at what is on the floor
@@ -32,5 +32,6 @@ by GDQuest and contributors (https://www.gdquest.com/), character by Luciano Mu�
 licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 Changes made here: the animation clips and unused vertex attributes were removed
-and the mesh was quantized (`tools/build-rig.mjs`). The original file is kept in
-`assets-src/`.
+and the mesh was quantized (`tools/build-rig.mjs`). At run time some bones are
+scaled to give the figure adult proportions (smaller head, longer arms, slimmer
+chest). The original file is kept in `assets-src/`.

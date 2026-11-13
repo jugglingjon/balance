@@ -17,7 +17,7 @@ const LIMB_PARTS = {
   leg: ['thigh', 'shin', 'foot'],
 };
 
-const INVERTED = { lowerTorso: 180, upperTorso: 180, head: 180, leg: 180 };
+const INVERTED = { lowerTorso: 180, midTorso: 180, upperTorso: 180, head: 180, leg: 180 };
 
 export const PRESETS = [
   {
@@ -25,19 +25,19 @@ export const PRESETS = [
     name: 'Mountain',
     view: 'side',
     // A slight forward lean from the ankles puts the weight over mid-foot.
-    angles: { lowerTorso: 2.5, upperTorso: 2.5, head: 2.5, arm: 2.5, leg: 2.5, foot: 0 },
+    angles: { lowerTorso: 2.5, midTorso: 2.5, upperTorso: 2.5, head: 2.5, arm: 2.5, leg: 2.5, foot: 0 },
   },
   {
     id: 'forward-fold',
     name: 'Forward fold',
     view: 'side',
-    angles: { leg: -7, foot: 0, lowerTorso: 105, upperTorso: 152, head: 165, upperArm: 6, forearm: -50, hand: -50 },
+    angles: { leg: -7, foot: 0, lowerTorso: 100, midTorso: 135, upperTorso: 160, head: 165, upperArm: 6, forearm: -65, hand: -65 },
   },
   {
     id: 'warrior-3',
     name: 'Warrior III',
     view: 'side',
-    angles: { lowerTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: [-4, -6], footL: 0 },
+    angles: { lowerTorso: 90, midTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: [-4, -6], footL: 0 },
   },
   {
     id: 'tree',
@@ -58,7 +58,7 @@ export const PRESETS = [
     id: 'boat',
     name: 'Boat',
     view: 'side',
-    angles: { lowerTorso: -40, upperTorso: -32, head: -15, leg: -128, arm: -95 },
+    angles: { lowerTorso: -42, midTorso: -36, upperTorso: -30, head: -15, leg: -128, arm: -95 },
   },
   {
     id: 'crow',
@@ -68,8 +68,9 @@ export const PRESETS = [
       hand: -90,
       forearm: 14,
       upperArm: 58,
-      lowerTorso: 84,
-      upperTorso: 112,
+      lowerTorso: 80,
+      midTorso: 98,
+      upperTorso: 114,
       head: 62,
       thigh: [-52, 14],
       shin: 112,
@@ -80,8 +81,8 @@ export const PRESETS = [
     id: 'headstand',
     name: 'Headstand',
     view: 'side',
-    // Tripod headstand: crown of the head and both palms on the floor.
-    angles: { ...INVERTED, lowerTorso: 177, leg: 174, upperArm: 61, forearm: 0, hand: -90 },
+    // Supported headstand: crown of the head and both forearms on the floor.
+    angles: { ...INVERTED, upperArm: 21.6, forearm: -90, hand: -96 },
   },
   {
     id: 'forearm-stand',

@@ -7,7 +7,8 @@ import rig from './mannequinRig.json';
 // Each of its bones belongs to one of our segments and has a `ref` rotation:
 // its world rotation when the figure stands in our rest pose. Posing is then
 //   bone world rotation = segment rotation x ref
-// with bone positions following from the model's own fixed bone offsets.
+// with each bone placed at a fixed offset from its parent bone. The rig data
+// also scales some bones to give the stylised model adult proportions.
 // A simple capsule figure stands in until the model has loaded.
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/mannequin.glb`;
@@ -65,34 +66,33 @@ function createModel(gltf) {
     // GLTFLoader strips characters such as "." from node names.
     const bone = byName[THREE.PropertyBinding.sanitizeNodeName(def.name)];
     if (!bone) throw new Error(`Mannequin model is missing bone "${def.name}"`);
-    bone.position.fromArray(def.position);
-    bone.scale.set(1, 1, 1);
     return {
       bone,
       segment: def.segment,
+      offset: new THREE.Vector3().fromArray(def.position),
       ref: new THREE.Quaternion().fromArray(def.ref),
-      world: new THREE.Quaternion(),
       parent: null,
       parentName: def.parent,
     };
   });
   for (const entry of bones) entry.parent = bones[rig.bones.findIndex((d) => d.name === entry.parentName)] || null;
+  // Take the bones out of their hierarchy: every bone is placed in world space
+  // below, which lets each one carry its own scale without passing it on.
+  bones.forEach((entry, i) => {
+    group.add(entry.bone);
+    entry.bone.scale.fromArray(rig.bones[i].scale);
+  });
 
   const rootOffset = new THREE.Vector3().fromArray(rig.rootOffset);
-  const _q = new THREE.Quaternion();
 
   return {
     group,
     update(pose, frame) {
       // rig.bones lists parents before children.
-      for (const entry of bones) {
-        entry.world.multiplyQuaternions(pose[entry.segment], entry.ref);
-        if (entry.parent) {
-          entry.bone.quaternion.copy(_q.copy(entry.parent.world).invert()).multiply(entry.world);
-        } else {
-          entry.bone.quaternion.copy(entry.world);
-          entry.bone.position.copy(rootOffset).applyQuaternion(pose.lowerTorso).add(frame.origins.lowerTorso);
-        }
+      for (const { bone, segment, offset, ref, parent } of bones) {
+        bone.quaternion.multiplyQuaternions(pose[segment], ref);
+        if (parent) bone.position.copy(offset).applyQuaternion(parent.bone.quaternion).add(parent.bone.position);
+        else bone.position.copy(rootOffset).applyQuaternion(pose.lowerTorso).add(frame.origins.lowerTorso);
       }
     },
   };

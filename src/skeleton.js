@@ -5,8 +5,9 @@ import * as THREE from 'three';
 // zero) the figure stands upright facing +Z with arms at its sides, +X being
 // the figure's left. A pose is one absolute world quaternion per segment.
 //
-// Proportions are those of the GDQuest mannequin model in metres (about 1.8 m
-// tall); they come from `node tools/build-rig.mjs`. The `shapes` are only a
+// Proportions are those of the GDQuest mannequin model after it has been
+// rescaled to adult proportions (metres, about 1.79 m tall); they come from
+// `node tools/build-rig.mjs`. The `shapes` are only a
 // stand-in drawn while the model loads. Mass values are fractions
 // of total body mass (they sum to 1) and `com` is the segment's centre of mass
 // in its local frame. `contacts` are spheres that can rest on the floor: `r` is
@@ -16,31 +17,31 @@ import * as THREE from 'three';
 const LIMBS = {
   upperArm: {
     mass: 0.028,
-    com: [0, -0.114, 0],
-    shapes: [{ a: [0, 0, 0], b: [0, -0.262, 0], r: 0.043 }],
+    com: [0, -0.137, 0],
+    shapes: [{ a: [0, 0, 0], b: [0, -0.314, 0], r: 0.043 }],
     contacts: [],
-    child: { name: 'forearm', at: [0, -0.262, 0] },
+    child: { name: 'forearm', at: [0, -0.314, 0] },
   },
   forearm: {
     mass: 0.016,
-    com: [0, -0.089, 0],
-    shapes: [{ a: [0, 0, 0], b: [0, -0.207, 0], r: 0.036 }],
+    com: [0, -0.111, 0],
+    shapes: [{ a: [0, 0, 0], b: [0, -0.259, 0], r: 0.036 }],
     contacts: [
       { id: 'elbow', p: [0, 0, 0], r: 0.038 },
-      { id: 'wrist', p: [0, -0.165, 0], r: 0.038 },
+      { id: 'wrist', p: [0, -0.215, 0], r: 0.038 },
     ],
-    child: { name: 'hand', at: [0, -0.207, 0] },
+    child: { name: 'hand', at: [0, -0.259, 0] },
   },
   hand: {
     mass: 0.006,
-    com: [0, -0.08, 0],
-    shapes: [{ a: [0, -0.03, 0], b: [0, -0.14, 0], r: 0.036, scale: [1, 1, 0.6] }],
+    com: [0, -0.085, 0],
+    shapes: [{ a: [0, -0.03, 0], b: [0, -0.15, 0], r: 0.036, scale: [1, 1, 0.6] }],
     contacts: [
       { id: 'heelOfHand', p: [0, -0.03, 0], r: 0.026, pad: 0.03 },
-      { id: 'knuckles', p: [0, -0.09, 0], r: 0.026, pad: 0.03 },
-      { id: 'fingertips', p: [0, -0.15, 0], r: 0.026, pad: 0.03 },
+      { id: 'knuckles', p: [0, -0.095, 0], r: 0.026, pad: 0.03 },
+      { id: 'fingertips', p: [0, -0.16, 0], r: 0.026, pad: 0.03 },
     ],
-    tip: { id: 'fingertips', p: [0, -0.175, 0] },
+    tip: { id: 'fingertips', p: [0, -0.185, 0] },
   },
   thigh: {
     mass: 0.1,
@@ -79,35 +80,42 @@ const TRUNK = {
       { id: 'sitBoneR', p: [-0.06, 0.03, -0.02], r: 0.08, pad: 0.05 },
     ],
   },
+  midTorso: {
+    mass: 0.139,
+    com: [0, 0.09, -0.004],
+    shapes: [{ a: [0, 0.03, 0], b: [0, 0.15, -0.006], r: 0.09, scale: [1.3, 1, 1] }],
+    contacts: [],
+  },
   upperTorso: {
-    mass: 0.355,
-    com: [0, 0.2, -0.01],
+    mass: 0.216,
+    com: [0, 0.11, -0.02],
     shapes: [
-      { a: [0, 0.06, -0.005], b: [0, 0.31, -0.03], r: 0.105, scale: [1.4, 1, 1] },
-      { a: [-0.14, 0.367, -0.051], b: [0.14, 0.367, -0.051], r: 0.055 },
+      { a: [0, 0.05, -0.01], b: [0, 0.13, -0.025], r: 0.105, scale: [1.4, 1, 1] },
+      { a: [-0.14, 0.182, -0.046], b: [0.14, 0.182, -0.046], r: 0.055 },
     ],
     contacts: [
-      { id: 'shoulderL', p: [0.14, 0.367, -0.051], r: 0.06 },
-      { id: 'shoulderR', p: [-0.14, 0.367, -0.051], r: 0.06 },
+      { id: 'shoulderL', p: [0.14, 0.182, -0.046], r: 0.06 },
+      { id: 'shoulderR', p: [-0.14, 0.182, -0.046], r: 0.06 },
     ],
   },
   head: {
     mass: 0.081,
-    com: [0, 0.17, 0.02],
+    com: [0, 0.16, 0.02],
     shapes: [
       { a: [0, 0, 0], b: [0, 0.08, 0.01], r: 0.045 },
-      { a: [0, 0.19, 0.02], b: [0, 0.19, 0.02], r: 0.11 },
+      { a: [0, 0.175, 0.02], b: [0, 0.175, 0.02], r: 0.095 },
     ],
-    contacts: [{ id: 'head', p: [0, 0.19, 0.02], r: 0.11, pad: 0.04 }],
-    tip: { id: 'headTop', p: [0, 0.3, 0.02] },
+    contacts: [{ id: 'head', p: [0, 0.175, 0.02], r: 0.095, pad: 0.04 }],
+    tip: { id: 'headTop', p: [0, 0.27, 0.02] },
   },
 };
 
 // Joint positions in the parent segment's frame.
 const JOINTS = {
-  waist: [0, 0.144, 0.025],
-  neck: [0, 0.427, -0.053],
-  shoulder: [0.174, 0.367, -0.051],
+  waist: [0, 0.144, 0.025], // pelvis to abdomen
+  chest: [0, 0.185, -0.008], // abdomen to ribcage
+  neck: [0, 0.242, -0.045],
+  shoulder: [0.172, 0.182, -0.046],
   hip: [0.102, 0, 0],
 };
 
@@ -140,7 +148,8 @@ function buildSegments() {
 
   add('lowerTorso', TRUNK.lowerTorso, null, [0, 0, 0]);
   const mirrored = ([x, y, z], sign) => [x * sign, y, z];
-  add('upperTorso', TRUNK.upperTorso, 'lowerTorso', JOINTS.waist);
+  add('midTorso', TRUNK.midTorso, 'lowerTorso', JOINTS.waist);
+  add('upperTorso', TRUNK.upperTorso, 'midTorso', JOINTS.chest);
   add('head', TRUNK.head, 'upperTorso', JOINTS.neck);
   for (const [side, sign] of [['L', 1], ['R', -1]]) {
     addChain('upperArm', 'upperTorso', mirrored(JOINTS.shoulder, sign), side);

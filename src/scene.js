@@ -8,7 +8,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // margins (pixels) that the UI overlays occupy.
 const VIEW_BOTTOM = -0.12;
 const VIEW_TOP = 2.2;
-const VIEW_WIDTH = 2.3;
+const VIEW_WIDTH = 1.5;
 const MARGIN_TOP = 112;
 const MARGIN_BOTTOM = 96;
 const TARGET = new THREE.Vector3(0, 1.1, 0);
@@ -116,6 +116,9 @@ export function createStage(canvas) {
     controls,
     setView,
     getView: () => view,
+    // Unit vector pointing from the scene toward the camera in the flat views;
+    // poses are edited by rotating about it.
+    getViewAxis: () => VIEW_DIRECTIONS[view],
     onFrame: (fn) => frameCallbacks.push(fn),
   };
 }

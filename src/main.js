@@ -1,15 +1,17 @@
 import './styles/main.scss';
 import { createStage } from './scene.js';
-import { SEGMENT_NAMES, createPose, createFrame, solvePose, shiftFrame } from './skeleton.js';
+import * as THREE from 'three';
+import { SEGMENTS, SEGMENT_NAMES, createPose, createFrame, solvePose, shiftFrame } from './skeleton.js';
 import { createMannequin } from './mannequin.js';
 import { PRESETS, presetPose } from './presets.js';
 import { createBalance, computeBalance } from './balance.js';
 import { createBalanceViz } from './balanceViz.js';
+import { createHandles } from './handles.js';
 
 const HINTS = {
-  side: 'Side view · scroll to zoom, right-drag to pan',
-  front: 'Front view · scroll to zoom, right-drag to pan',
-  orbit: 'Orbit view · drag to rotate, scroll to zoom',
+  side: 'Drag the dots to move the body · scroll to zoom',
+  front: 'Drag the dots to move the body · scroll to zoom',
+  orbit: 'Orbit view · drag to rotate · switch to Side or Front to pose',
 };
 const POSE_TRANSITION_MS = 600;
 
@@ -26,29 +28,59 @@ const frame = createFrame();
 const scratchFrame = createFrame();
 const balance = createBalance();
 let poseTween = null;
+// Where the figure stands. With no pin, the middle of its base of support is
+// kept at the origin. Once the user starts dragging, one planted contact is
+// pinned in place instead so the body moves around what is on the floor.
+let pin = null; // { segment, local, x, z }
+let mirrored = true;
+
+const _pinPoint = new THREE.Vector3();
+function pinPosition() {
+  return _pinPoint.copy(pin.local).applyQuaternion(pose[pin.segment]).add(frame.origins[pin.segment]);
+}
 
 // Redraw everything that depends on the solved pose.
 function refresh() {
   mannequin.update(pose, frame);
   computeBalance(pose, frame, balance);
   balanceViz.update(balance);
+  handles.sync();
   updateStatus();
 }
 
-// Solve the pose and slide the figure so the middle of its base of support
-// sits at (cx, cz) on the floor.
-function applyPose(cx = 0, cz = 0) {
+function applyPose() {
   solvePose(pose, frame);
-  shiftFrame(frame, cx - frame.supportCentre.x, cz - frame.supportCentre.z);
+  if (pin) {
+    const p = pinPosition();
+    shiftFrame(frame, pin.x - p.x, pin.z - p.z);
+  } else {
+    shiftFrame(frame, -frame.supportCentre.x, -frame.supportCentre.z);
+  }
   refresh();
 }
 
-function supportCentreOf(p) {
-  return solvePose(p, scratchFrame).supportCentre.clone();
-}
+const handles = createHandles(stage, {
+  pose,
+  frame,
+  isMirrored: () => mirrored,
+  pinPosition,
+  poseChanged: applyPose,
+  beginDrag(fixedSegments) {
+    poseTween = null;
+    clearPresetSelection();
+    // Pin a planted contact that this drag will not move; failing that, any.
+    const contact = frame.grounded.find((c) => fixedSegments.has(c.segment)) || frame.grounded[0];
+    const def = SEGMENTS[contact.segment].contacts.find((c) => c.id === contact.id);
+    pin = { segment: contact.segment, local: def.p, x: contact.position.x, z: contact.position.z };
+  },
+  endDrag() {},
+});
+stage.scene.add(handles.group);
+stage.onFrame(() => handles.resize());
 
 function setPreset(preset, animate = true) {
   const to = presetPose(preset);
+  pin = null;
   if (!animate) {
     for (const name of SEGMENT_NAMES) pose[name].copy(to[name]);
     poseTween = null;
@@ -57,26 +89,35 @@ function setPreset(preset, animate = true) {
   }
   const from = createPose();
   for (const name of SEGMENT_NAMES) from[name].copy(pose[name]);
-  poseTween = { start: performance.now(), from, to };
+  // Blend the pelvis position too: from wherever the figure is now to where
+  // the new pose stands when centred. solvePose leaves the pelvis above the
+  // origin, so the centred pelvis offset is minus the support centre.
+  const target = solvePose(to, scratchFrame).supportCentre;
+  poseTween = {
+    start: performance.now(),
+    from,
+    to,
+    fromX: frame.origins.lowerTorso.x,
+    fromZ: frame.origins.lowerTorso.z,
+    toX: -target.x,
+    toZ: -target.z,
+  };
 }
 
-// While blending between two poses the set of grounded contacts changes, so
-// the figure is positioned relative to its pelvis and the pelvis offset is
-// blended between the two end poses. That keeps the motion free of jumps.
 stage.onFrame((now) => {
   if (!poseTween) return;
-  const t = Math.min((now - poseTween.start) / POSE_TRANSITION_MS, 1);
+  const tw = poseTween;
+  const t = Math.min((now - tw.start) / POSE_TRANSITION_MS, 1);
   const e = t * t * (3 - 2 * t);
-  for (const name of SEGMENT_NAMES) pose[name].slerpQuaternions(poseTween.from[name], poseTween.to[name], e);
-  const a = supportCentreOf(poseTween.from);
-  const b = supportCentreOf(poseTween.to);
-  solvePose(pose, frame);
-  shiftFrame(frame, -(a.x + (b.x - a.x) * e), -(a.z + (b.z - a.z) * e));
-  refresh();
+  for (const name of SEGMENT_NAMES) pose[name].slerpQuaternions(tw.from[name], tw.to[name], e);
   if (t === 1) {
     poseTween = null;
     applyPose();
+    return;
   }
+  solvePose(pose, frame);
+  shiftFrame(frame, tw.fromX + (tw.toX - tw.fromX) * e, tw.fromZ + (tw.toZ - tw.fromZ) * e);
+  refresh();
 });
 
 // --- UI ---------------------------------------------------------------------
@@ -98,8 +139,13 @@ function updateStatus() {
     (balance.balanced ? 'inside the base' : 'outside the base');
 }
 
+function clearPresetSelection() {
+  presetBar.querySelectorAll('button').forEach((btn) => btn.setAttribute('aria-pressed', 'false'));
+}
+
 function selectView(view) {
   stage.setView(view);
+  handles.sync();
   viewButtons.forEach((btn) => {
     btn.setAttribute('aria-pressed', String(btn.dataset.view === view));
   });
@@ -118,6 +164,12 @@ viewButtons.forEach((btn) => {
   btn.addEventListener('click', () => selectView(btn.dataset.view));
 });
 
+const mirrorToggle = document.getElementById('mirror');
+mirrorToggle.addEventListener('click', () => {
+  mirrored = !mirrored;
+  mirrorToggle.setAttribute('aria-pressed', String(mirrored));
+});
+
 for (const preset of PRESETS) {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -133,3 +185,19 @@ for (const preset of PRESETS) {
 
 selectView('side');
 selectPreset(PRESETS[0], false);
+
+// Development aid: lets automated checks find handles on screen.
+if (import.meta.env.DEV) {
+  window.__balance = {
+    balance,
+    handlePoints() {
+      const rect = stage.renderer.domElement.getBoundingClientRect();
+      return handles.group.children
+        .filter((s) => s.visible)
+        .map((s) => {
+          const p = s.position.clone().project(stage.camera);
+          return { x: ((p.x + 1) / 2) * rect.width, y: ((1 - p.y) / 2) * rect.height, world: s.position.toArray() };
+        });
+    },
+  };
+}

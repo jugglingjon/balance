@@ -28,9 +28,9 @@ jobs:
         with:
           path: dist
 
-  # Every push is built; only the repository's default branch is published.
+  # Every push is built; only main is published.
   deploy:
-    if: github.ref_name == github.event.repository.default_branch
+    if: github.ref_name == 'main'
     needs: build
     runs-on: ubuntu-latest
     environment:

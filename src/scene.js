@@ -4,7 +4,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // World conventions (metres): Y is up, the floor is y = 0,
 // the figure faces +Z and its left/right runs along X.
 
-const VIEW_HEIGHT = 2.9; // metres visible vertically at zoom 1
+// World-space band that must stay visible at zoom 1 (metres), and the screen
+// margins (pixels) that the UI overlays occupy.
+const VIEW_BOTTOM = -0.12;
+const VIEW_TOP = 2.2;
+const VIEW_WIDTH = 2.3;
+const MARGIN_TOP = 70;
+const MARGIN_BOTTOM = 96;
 const TARGET = new THREE.Vector3(0, 1.1, 0);
 const CAMERA_DISTANCE = 10;
 const TRANSITION_MS = 450;
@@ -79,26 +85,39 @@ export function createStage(canvas) {
     const height = canvas.clientHeight;
     if (!width || !height) return;
     renderer.setSize(width, height, false);
-    // Keep the full figure height in view; on narrow screens fit the width instead.
-    const aspect = width / height;
-    const halfH = Math.max(VIEW_HEIGHT, 2.2 / aspect) / 2;
-    camera.top = halfH;
-    camera.bottom = -halfH;
-    camera.left = -halfH * aspect;
-    camera.right = halfH * aspect;
+    // Fit the band of world space the figure can occupy into the part of the
+    // canvas that is not covered by the toolbar and the preset dock. The
+    // frustum is off-centre vertically so the floor sits just above the dock.
+    const usable = Math.max(height - MARGIN_TOP - MARGIN_BOTTOM, 100);
+    const scale = Math.max((VIEW_TOP - VIEW_BOTTOM) / usable, VIEW_WIDTH / width); // metres per pixel
+    camera.bottom = VIEW_BOTTOM - MARGIN_BOTTOM * scale - TARGET.y;
+    camera.top = camera.bottom + height * scale;
+    camera.right = (width * scale) / 2;
+    camera.left = -camera.right;
     camera.updateProjectionMatrix();
   }
 
   new ResizeObserver(resize).observe(canvas);
   resize();
 
+  const frameCallbacks = [];
+
   renderer.setAnimationLoop((now) => {
+    for (const fn of frameCallbacks) fn(now);
     if (transition) stepTransition(now);
     else controls.update();
     renderer.render(scene, camera);
   });
 
-  return { scene, camera, renderer, controls, setView, getView: () => view };
+  return {
+    scene,
+    camera,
+    renderer,
+    controls,
+    setView,
+    getView: () => view,
+    onFrame: (fn) => frameCallbacks.push(fn),
+  };
 }
 
 function createFloor() {

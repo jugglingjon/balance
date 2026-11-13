@@ -99,14 +99,69 @@ body {
   }
 }
 
-.hint {
+.dock {
   position: absolute;
-  left: $gutter;
-  right: $gutter;
-  bottom: $gutter;
-  margin: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding-bottom: 10px;
+  pointer-events: none;
+}
+
+.presets {
+  display: flex;
+  gap: 6px;
+  padding: 6px $gutter;
+  overflow-x: auto;
+  scrollbar-width: none;
+  pointer-events: auto;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // Centre the row when it fits, scroll from the left edge when it does not.
+  &::before,
+  &::after {
+    content: "";
+    margin: auto;
+  }
+
+  &__btn {
+    appearance: none;
+    flex: none;
+    padding: 7px 13px;
+    border: 1px solid $line;
+    border-radius: 999px;
+    background: $panel;
+    color: $ink;
+    font: inherit;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+    &:hover {
+      border-color: $accent;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $accent;
+      outline-offset: 1px;
+    }
+
+    &[aria-pressed="true"] {
+      background: $ink;
+      border-color: $ink;
+      color: #fff;
+    }
+  }
+}
+
+.hint {
+  margin: 4px $gutter 0;
   color: $muted;
   font-size: 13px;
   text-align: center;
-  pointer-events: none;
 }

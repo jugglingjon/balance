@@ -37,14 +37,18 @@ export const PRESETS = [
     id: 'warrior-3',
     name: 'Warrior III',
     view: 'side',
-    angles: { lowerTorso: 90, midTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: [-4, -6], footL: 0 },
+    angles: { lowerTorso: 90, midTorso: 90, upperTorso: 90, head: 75, arm: -90, legR: 90, legL: [-7, -8], footL: 0 },
   },
   {
     id: 'tree',
     name: 'Tree',
     view: 'front',
     angles: {
-      legL: [0, -7.5], // shift the hips over the standing foot
+      lowerTorso: 3,
+      midTorso: 3,
+      upperTorso: 3,
+      head: 3,
+      legL: [3, -9.2], // shift the hips over the standing foot
       footL: 0,
       thighR: [0, -55],
       shinR: [0, 75],
@@ -88,7 +92,7 @@ export const PRESETS = [
     id: 'forearm-stand',
     name: 'Forearm stand',
     view: 'side',
-    angles: { ...INVERTED, head: 95, upperArm: 8, forearm: -90, hand: -96 },
+    angles: { ...INVERTED, head: 95, upperArm: 17, forearm: -90, hand: -96 },
   },
   {
     id: 'handstand',

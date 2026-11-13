@@ -8,15 +8,22 @@ const EDGE_TOLERANCE = 0.002;
 
 const _v = new THREE.Vector3();
 
+// Fraction of the base, measured across it through its centre, that counts as
+// comfortably balanced. Between this core and the edge is the warning zone.
+export const CORE_FRACTION = 0.5;
+
 export function createBalance() {
-  return { com: new THREE.Vector3(), hull: [], margin: 0, balanced: false };
+  return { com: new THREE.Vector3(), hull: [], core: [], margin: 0, balanced: false, state: 'unbalanced' };
 }
 
 // Fills `balance` for a solved pose:
 //   com      centre of gravity of the whole body
 //   hull     base of support, a convex polygon of {x, z} floor points
+//   core     the middle of the base: the hull shrunk about its centroid
 //   margin   metres from the centre of gravity's floor projection to the
 //            nearest edge of the base; positive inside, negative outside
+//   state    'balanced' (over the core), 'edge' (over the base but outside
+//            the core) or 'unbalanced' (outside the base)
 export function computeBalance(pose, frame, balance) {
   balance.com.set(0, 0, 0);
   for (const name of SEGMENT_NAMES) {
@@ -35,6 +42,14 @@ export function computeBalance(pose, frame, balance) {
   balance.hull = convexHull(points);
   balance.margin = signedDistance(balance.hull, balance.com.x, balance.com.z);
   balance.balanced = balance.margin >= -EDGE_TOLERANCE;
+
+  const centre = centroid(balance.hull);
+  balance.core = balance.hull.map((p) => ({
+    x: centre.x + (p.x - centre.x) * CORE_FRACTION,
+    z: centre.z + (p.z - centre.z) * CORE_FRACTION,
+  }));
+  const overCore = signedDistance(balance.core, balance.com.x, balance.com.z) >= 0;
+  balance.state = !balance.balanced ? 'unbalanced' : overCore ? 'balanced' : 'edge';
   return balance;
 }
 
@@ -54,6 +69,22 @@ function convexHull(points) {
     return out;
   };
   return build(pts).concat(build(pts.reverse()));
+}
+
+// Area centroid of a convex polygon.
+function centroid(hull) {
+  let area = 0;
+  let x = 0;
+  let z = 0;
+  for (let i = 0; i < hull.length; i++) {
+    const a = hull[i];
+    const b = hull[(i + 1) % hull.length];
+    const w = a.x * b.z - b.x * a.z;
+    area += w;
+    x += (a.x + b.x) * w;
+    z += (a.z + b.z) * w;
+  }
+  return { x: x / (3 * area), z: z / (3 * area) };
 }
 
 function signedDistance(hull, x, z) {

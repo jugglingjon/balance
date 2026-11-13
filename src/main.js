@@ -13,6 +13,7 @@ const HINTS = {
   front: 'Drag the dots to move the body · scroll to zoom',
   orbit: 'Orbit view · drag to rotate · switch to Side or Front to pose',
 };
+const STATUS_LABELS = { balanced: 'Balanced', edge: 'Near the edge', unbalanced: 'Off balance' };
 const POSE_TRANSITION_MS = 600;
 
 const stage = createStage(document.getElementById('stage'));
@@ -132,8 +133,8 @@ const statusDetail = statusEl.querySelector('.status__detail');
 function updateStatus() {
   const cm = Math.abs(balance.margin * 100);
   const distance = cm < 9.95 ? cm.toFixed(1) : cm.toFixed(0);
-  statusEl.dataset.state = balance.balanced ? 'balanced' : 'unbalanced';
-  statusLabel.textContent = balance.balanced ? 'Balanced' : 'Off balance';
+  statusEl.dataset.state = balance.state;
+  statusLabel.textContent = STATUS_LABELS[balance.state];
   statusDetail.innerHTML =
     `<span class="status__prefix">Centre of gravity is </span>${distance} cm ` +
     (balance.balanced ? 'inside the base' : 'outside the base');

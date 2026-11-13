@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const STATE_COLOURS = { balanced: '#2f9e6e', unbalanced: '#d1495b' };
+export const STATE_COLOURS = { balanced: '#2f9e6e', edge: '#e0871b', unbalanced: '#d1495b' };
 
 const BASE_THICKNESS = 0.02; // the base is a thin slab so it shows edge-on
 const MARKER_SIZE = 0.11;
@@ -39,58 +39,70 @@ export function createBalanceViz() {
   const group = new THREE.Group();
   group.name = 'balance';
 
-  const textures = {
-    balanced: markerTexture(STATE_COLOURS.balanced),
-    unbalanced: markerTexture(STATE_COLOURS.unbalanced),
-  };
+  const textures = {};
+  for (const [state, colour] of Object.entries(STATE_COLOURS)) textures[state] = markerTexture(colour);
   const overlay = { depthTest: false, depthWrite: false, transparent: true };
 
   // Base of support on the floor.
-  const baseMaterial = new THREE.MeshBasicMaterial({ ...overlay, opacity: 0.55, side: THREE.DoubleSide });
+  const baseMaterial = new THREE.MeshBasicMaterial({ ...overlay, opacity: 0.4, side: THREE.DoubleSide });
   const base = new THREE.Mesh(new THREE.BufferGeometry(), baseMaterial);
   base.rotation.x = Math.PI / 2; // shape (x, y) -> floor (x, z), extruded downward
   base.position.y = BASE_THICKNESS;
   base.renderOrder = OVERLAY_ORDER;
   group.add(base);
 
+  // The middle of the base, where the pose is comfortably balanced.
+  const coreMaterial = new THREE.MeshBasicMaterial({ ...overlay, opacity: 0.75, side: THREE.DoubleSide });
+  const core = new THREE.Mesh(new THREE.BufferGeometry(), coreMaterial);
+  core.rotation.x = Math.PI / 2;
+  core.position.y = BASE_THICKNESS;
+  core.renderOrder = OVERLAY_ORDER + 1;
+  group.add(core);
+
   const outlineMaterial = new THREE.LineBasicMaterial({ ...overlay });
   const outline = new THREE.LineLoop(new THREE.BufferGeometry(), outlineMaterial);
   outline.position.y = BASE_THICKNESS;
-  outline.renderOrder = OVERLAY_ORDER + 1;
+  outline.renderOrder = OVERLAY_ORDER + 3;
   group.add(outline);
 
   // Plumb line from the centre of gravity down to the floor.
   const lineMaterial = new THREE.MeshBasicMaterial({ ...overlay });
   const line = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 1, 8), lineMaterial);
-  line.renderOrder = OVERLAY_ORDER + 2;
+  line.renderOrder = OVERLAY_ORDER + 3;
   group.add(line);
 
   const footMaterial = new THREE.MeshBasicMaterial({ ...overlay });
   const foot = new THREE.Mesh(new THREE.SphereGeometry(0.022, 20, 12), footMaterial);
-  foot.renderOrder = OVERLAY_ORDER + 3;
+  foot.renderOrder = OVERLAY_ORDER + 4;
   group.add(foot);
 
   const markerMaterial = new THREE.SpriteMaterial({ ...overlay, map: textures.balanced });
   const marker = new THREE.Sprite(markerMaterial);
   marker.scale.setScalar(MARKER_SIZE);
-  marker.renderOrder = OVERLAY_ORDER + 4;
+  marker.renderOrder = OVERLAY_ORDER + 5;
   group.add(marker);
 
   function update(balance) {
-    const state = balance.balanced ? 'balanced' : 'unbalanced';
+    const { state } = balance;
     const colour = STATE_COLOURS[state];
-    for (const m of [baseMaterial, outlineMaterial, lineMaterial, footMaterial]) m.color.set(colour);
+    for (const m of [baseMaterial, coreMaterial, outlineMaterial, lineMaterial, footMaterial]) m.color.set(colour);
     markerMaterial.map = textures[state];
 
     const { com, hull } = balance;
+    const slab = (points) =>
+      new THREE.ExtrudeGeometry(new THREE.Shape(points.map((p) => new THREE.Vector2(p.x, p.z))), {
+        depth: BASE_THICKNESS,
+        bevelEnabled: false,
+      });
     marker.position.copy(com);
     foot.position.set(com.x, 0, com.z);
     line.position.set(com.x, com.y / 2, com.z);
     line.scale.y = Math.max(com.y, 1e-4);
 
-    const shape = new THREE.Shape(hull.map((p) => new THREE.Vector2(p.x, p.z)));
     base.geometry.dispose();
-    base.geometry = new THREE.ExtrudeGeometry(shape, { depth: BASE_THICKNESS, bevelEnabled: false });
+    base.geometry = slab(hull);
+    core.geometry.dispose();
+    core.geometry = slab(balance.core);
     outline.geometry.dispose();
     outline.geometry = new THREE.BufferGeometry().setFromPoints(
       hull.map((p) => new THREE.Vector3(p.x, 0, p.z))

@@ -5,6 +5,7 @@ $panel: rgba(255, 255, 255, 0.82);
 $line: rgba(43, 42, 40, 0.14);
 $accent: #2f6f5e;
 $balanced: #2f9e6e;
+$edge: #c97612;
 $unbalanced: #d1495b;
 $radius: 10px;
 $gutter: 16px;
@@ -161,6 +162,10 @@ body {
   backdrop-filter: blur(8px);
   white-space: nowrap;
   pointer-events: none;
+
+  &[data-state="edge"] {
+    --state: #{$edge};
+  }
 
   &[data-state="unbalanced"] {
     --state: #{$unbalanced};

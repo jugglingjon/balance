@@ -39,7 +39,7 @@ export function createHandles(stage, ctx) {
 
   const textures = {
     idle: discTexture('#ffffff', '#3d5363'),
-    hot: discTexture('#f2b84b', '#3d5363'),
+    hot: discTexture('#1f2d38', '#ffffff'), // not amber: that is the 'near the edge' colour
   };
   const sprites = new Map();
   let handles = [];
